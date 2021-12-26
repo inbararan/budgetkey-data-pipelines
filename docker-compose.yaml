@@ -43,6 +43,8 @@ services:
 
   pipelines:
     image: budgetkey/budgetkey-data-pipelines
+    tty: true
+    stdin_open: true
     build: .
     volumes:
     - "data:/var/datapackages"
@@ -52,23 +54,37 @@ services:
       DPP_DB_ENGINE: postgresql://postgres:123456@db:5432/postgres
       DPP_REDIS_HOST: redis
       DPP_ELASTICSEARCH: elasticsearch:9200
+      ES_LOAD_FROM_URL: 1
+      DATAFLOWS_ELASTICSEARCH: elasticsearch:9200
     # simple configuration which only runs serve and allows to run commands using docker-compose exec
     # useful for local development - where you most likely want to run only a specific pipeline
     entrypoint: ["sh", "-c", "dpp init && dpp serve"]
 
   elasticsearch:
-    image: budgetkey/open-budget-elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.16.2
+    environment:
+      - discovery.type=single-node
     ports:
     - "19200:9200"
 
   kibana:
     depends_on:
     - elasticsearch
-    image: kibana:5.3
+    image: docker.elastic.co/kibana/kibana:7.16.2
     environment:
     - "ELASTICSEARCH_URL=http://elasticsearch:9200/"
     ports:
     - "15601:5601"
+  
+  search:
+    depends_on:
+    - elasticsearch
+    image: budgetkey/open-budget-search-api
+    environment:
+      ES_HOST: elasticsearch
+      ES_PORT: 9200
+    ports:
+    - "18000:8000"
 
   adminer:
     depends_on:

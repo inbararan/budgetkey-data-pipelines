@@ -10,15 +10,15 @@ from sqlalchemy import create_engine
 
 parameters, dp, res_iter = ingest()
 
-
 gdp = dict(datapackage.Package('./data/gdp/datapackage.json').resources[0].iter())
 inflation = dict(datapackage.Package('./data/inflation/datapackage.json').resources[0].iter())
 population = dict(datapackage.Package('./data/population/datapackage.json').resources[0].iter())
 infl_pop = dict((k,v*inflation[k]) for k, v in population.items() if k in inflation)
+dp_source = "http://next.obudget.org/datapackages" if os.environ.get("ES_LOAD_FROM_URL") == "1" else "/var/datapackages"
 totals = dict(
     (int(row['year']), row['net_revised'])
     for row in
-    datapackage.Package('/var/datapackages/budget/national/processed/totals/datapackage.json').resources[0].iter(keyed=True)
+    datapackage.Package(dp_source + '/budget/national/processed/totals/datapackage.json').resources[0].iter(keyed=True)
 )
 
 ECON_TRANSLATIONS = {'capital_expenditure': 'הוצאות הון', 'debt_repayment_principal': 'החזר חוב - קרן',
@@ -156,7 +156,9 @@ AND length(code)=10
 AND YEAR={}
 GROUP BY 1, 2"""
 
-engine = create_engine(os.environ['DPP_DB_ENGINE'])
+
+engine_url = "postgresql://readonly:readonly@data-next.obudget.org:5432/budgetkey" if os.environ.get("ES_LOAD_FROM_URL") == "1" else: os.environ['DPP_DB_ENGINE']
+engine = create_engine(engine_url)
 
 
 def query_based_charts(row):
