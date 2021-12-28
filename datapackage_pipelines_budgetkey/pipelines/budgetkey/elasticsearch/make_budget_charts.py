@@ -157,7 +157,7 @@ AND YEAR={}
 GROUP BY 1, 2"""
 
 
-engine_url = "postgresql://readonly:readonly@data-next.obudget.org:5432/budgetkey" if os.environ.get("ES_LOAD_FROM_URL") == "1" else: os.environ['DPP_DB_ENGINE']
+engine_url = "postgresql://readonly:readonly@data-next.obudget.org:5432/budgetkey" if os.environ.get("ES_LOAD_FROM_URL") == "1" else os.environ['DPP_DB_ENGINE']
 engine = create_engine(engine_url)
 
 
